@@ -3,7 +3,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { FamilyModule } from './families/family.module';
+import { ListModule } from './lists/list.module';
 import { UserEntity } from './users/user.entity';
+import { FamilyEntity } from './families/family.entity';
+import { ShoppingListEntity } from './lists/shopping-list.entity';
+import { ShoppingItemEntity } from './lists/shopping-item.entity';
 
 @Module({
   imports: [
@@ -17,13 +22,14 @@ import { UserEntity } from './users/user.entity';
         username: config.get('DB_USER', 'postgres'),
         password: config.get('DB_PASS', 'postgres'),
         database: config.get('DB_NAME', 'familycart'),
-        entities: [UserEntity],
+        entities: [UserEntity, FamilyEntity, ShoppingListEntity, ShoppingItemEntity],
         synchronize: config.get('NODE_ENV') !== 'production',
       }),
     }),
     UsersModule,
     AuthModule,
-    // TODO: FamilyModule, ListModule
+    FamilyModule,
+    ListModule,
   ],
 })
 export class AppModule {}
