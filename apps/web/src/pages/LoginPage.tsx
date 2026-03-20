@@ -1,19 +1,24 @@
+import { ThemeToggle } from '../components/ThemeToggle';
+
 export function LoginPage() {
   const handleGoogleLogin = () => {
     window.location.href = '/api/auth/google';
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-emerald-100">
-      <div className="bg-white rounded-2xl shadow-xl p-10 w-full max-w-sm text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="absolute top-4 right-4">
+        <ThemeToggle />
+      </div>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-10 w-full max-w-sm text-center">
         <div className="mb-6">
-          <h1 className="text-4xl font-bold text-primary-700">FamilyCart</h1>
-          <p className="text-gray-500 mt-2">Lista de compras compartida en familia</p>
+          <h1 className="text-4xl font-bold text-primary-700 dark:text-primary-400">FamilyCart</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-2">Lista de compras compartida en familia</p>
         </div>
 
         <button
           onClick={handleGoogleLogin}
-          className="w-full flex items-center justify-center gap-3 border border-gray-300 rounded-xl px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-center gap-3 border border-gray-300 dark:border-gray-600 rounded-xl px-4 py-3 text-gray-700 dark:text-gray-200 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
           <GoogleIcon />
           Continuar con Google

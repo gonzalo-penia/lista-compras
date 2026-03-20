@@ -28,8 +28,8 @@ export function AuthCallbackPage() {
   }, [navigate, setAuth]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-gray-500">Iniciando sesión...</p>
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-900">
+      <p className="text-gray-500 dark:text-gray-400">Iniciando sesión...</p>
     </div>
   );
 }

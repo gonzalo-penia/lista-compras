@@ -20,13 +20,13 @@ export class ShoppingItemEntity {
   @Column({ nullable: true, type: 'numeric' })
   quantity!: number | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   unit!: string | null;
 
   @Column({ default: false })
   checked!: boolean;
 
-  @Column({ name: 'checked_by', nullable: true })
+  @Column({ name: 'checked_by', type: 'varchar', nullable: true })
   checkedBy!: string | null;
 
   @Column({ name: 'created_by' })

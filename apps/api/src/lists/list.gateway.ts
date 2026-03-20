@@ -39,6 +39,28 @@ export class ListGateway implements OnGatewayConnection {
     }
   }
 
+  // ── Sala de familia ──────────────────────────────────────────────────────────
+
+  @SubscribeMessage('family:join')
+  handleJoinFamily(@ConnectedSocket() client: AuthSocket, @MessageBody() familyId: string) {
+    client.join(`family:${familyId}`);
+  }
+
+  @SubscribeMessage('family:leave')
+  handleLeaveFamily(@ConnectedSocket() client: AuthSocket, @MessageBody() familyId: string) {
+    client.leave(`family:${familyId}`);
+  }
+
+  notifyListCreated(familyId: string, list: unknown) {
+    this.server.to(`family:${familyId}`).emit('list:added', list);
+  }
+
+  notifyListDeleted(familyId: string, listId: string) {
+    this.server.to(`family:${familyId}`).emit('list:deleted', { id: listId });
+  }
+
+  // ── Sala de lista ─────────────────────────────────────────────────────────────
+
   @SubscribeMessage('list:join')
   handleJoinList(@ConnectedSocket() client: AuthSocket, @MessageBody() listId: string) {
     client.join(`list:${listId}`);
@@ -48,6 +70,8 @@ export class ListGateway implements OnGatewayConnection {
   handleLeaveList(@ConnectedSocket() client: AuthSocket, @MessageBody() listId: string) {
     client.leave(`list:${listId}`);
   }
+
+  // ── Ítems ────────────────────────────────────────────────────────────────────
 
   @SubscribeMessage('item:add')
   async handleAddItem(
@@ -87,5 +111,34 @@ export class ListGateway implements OnGatewayConnection {
   ) {
     await this.listService.deleteItem(data.itemId);
     this.server.to(`list:${data.listId}`).emit('item:deleted', { id: data.itemId });
+  }
+
+  // ── Gastos ───────────────────────────────────────────────────────────────────
+
+  @SubscribeMessage('expense:add')
+  async handleAddExpense(
+    @ConnectedSocket() client: AuthSocket,
+    @MessageBody() data: { listId: string; amount: number; description?: string },
+  ) {
+    const expense = await this.listService.addExpense(data.listId, client.userId, data.amount, data.description);
+    this.server.to(`list:${data.listId}`).emit('expense:added', expense);
+    return expense;
+  }
+
+  @SubscribeMessage('expense:delete')
+  async handleDeleteExpense(
+    @ConnectedSocket() client: AuthSocket,
+    @MessageBody() data: { expenseId: string; listId: string },
+  ) {
+    await this.listService.deleteExpense(data.expenseId);
+    this.server.to(`list:${data.listId}`).emit('expense:deleted', { id: data.expenseId });
+  }
+
+  notifyExpenseTrackingChanged(listId: string, trackExpenses: boolean) {
+    this.server.to(`list:${listId}`).emit('list:expenses-toggled', { id: listId, trackExpenses });
+  }
+
+  notifyListSettled(listId: string) {
+    this.server.to(`list:${listId}`).emit('list:settled', { id: listId });
   }
 }

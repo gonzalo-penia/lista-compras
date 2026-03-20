@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { FamilyEntity } from '../families/family.entity';
 import { ShoppingItemEntity } from './shopping-item.entity';
+import { ExpenseEntity } from './expense.entity';
 
 @Entity('shopping_lists')
 export class ShoppingListEntity {
@@ -26,8 +27,17 @@ export class ShoppingListEntity {
   @Column({ name: 'family_id' })
   familyId!: string;
 
+  @Column({ name: 'track_expenses', default: false })
+  trackExpenses!: boolean;
+
+  @Column({ default: false })
+  settled!: boolean;
+
   @OneToMany(() => ShoppingItemEntity, (item) => item.list, { cascade: true })
   items!: ShoppingItemEntity[];
+
+  @OneToMany(() => ExpenseEntity, (expense) => expense.list, { cascade: true })
+  expenses!: ExpenseEntity[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

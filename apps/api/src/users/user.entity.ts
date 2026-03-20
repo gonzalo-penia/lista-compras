@@ -17,7 +17,7 @@ export class UserEntity {
   @Column()
   name!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   picture!: string;
 
   @Column({ unique: true })

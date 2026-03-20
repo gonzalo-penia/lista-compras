@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth.store';
+import { useThemeStore } from './store/theme.store';
 import { LoginPage } from './pages/LoginPage';
 import { AuthCallbackPage } from './pages/AuthCallbackPage';
 import { FamilySetupPage } from './pages/FamilySetupPage';
@@ -8,6 +10,11 @@ import { ListDetailPage } from './pages/ListDetailPage';
 
 function App() {
   const { isAuthenticated } = useAuthStore();
+  const { isDark } = useThemeStore();
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark);
+  }, [isDark]);
 
   return (
     <Routes>

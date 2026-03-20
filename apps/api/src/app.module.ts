@@ -9,6 +9,7 @@ import { UserEntity } from './users/user.entity';
 import { FamilyEntity } from './families/family.entity';
 import { ShoppingListEntity } from './lists/shopping-list.entity';
 import { ShoppingItemEntity } from './lists/shopping-item.entity';
+import { ExpenseEntity } from './lists/expense.entity';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { ShoppingItemEntity } from './lists/shopping-item.entity';
         username: config.get('DB_USER', 'postgres'),
         password: config.get('DB_PASS', 'postgres'),
         database: config.get('DB_NAME', 'familycart'),
-        entities: [UserEntity, FamilyEntity, ShoppingListEntity, ShoppingItemEntity],
+        entities: [UserEntity, FamilyEntity, ShoppingListEntity, ShoppingItemEntity, ExpenseEntity],
         synchronize: config.get('NODE_ENV') !== 'production',
       }),
     }),
