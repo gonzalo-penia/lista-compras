@@ -7,6 +7,7 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { FamilyEntity } from '../families/family.entity';
 import { ShoppingItemEntity } from './shopping-item.entity';
@@ -24,6 +25,7 @@ export class ShoppingListEntity {
   @JoinColumn({ name: 'family_id' })
   family!: FamilyEntity;
 
+  @Index('idx_shopping_lists_family_id')
   @Column({ name: 'family_id' })
   familyId!: string;
 

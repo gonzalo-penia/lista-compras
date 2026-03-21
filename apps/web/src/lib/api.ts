@@ -3,15 +3,19 @@ import { useAuthStore } from '../store/auth.store';
 const BASE = '/api';
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = useAuthStore.getState().token;
   const res = await fetch(`${BASE}${path}`, {
     ...init,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init?.headers,
     },
   });
+
+  if (res.status === 401) {
+    useAuthStore.getState().clearAuth();
+    throw new Error('Unauthorized');
+  }
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ message: res.statusText }));

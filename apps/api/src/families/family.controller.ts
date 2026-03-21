@@ -8,9 +8,11 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { IsString, MinLength, MaxLength } from 'class-validator';
+import { Throttle } from '@nestjs/throttler';
 import { FamilyService } from './family.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { UserEntity } from '../users/user.entity';
@@ -24,8 +26,8 @@ class CreateFamilyDto {
 
 class JoinFamilyDto {
   @IsString()
-  @MinLength(6)
-  @MaxLength(6)
+  @MinLength(8)
+  @MaxLength(8)
   inviteCode!: string;
 }
 
@@ -42,6 +44,7 @@ export class FamilyController {
 
   @Post('join')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ strict: { ttl: 60_000, limit: 5 } })
   join(@Req() req: Request, @Body() dto: JoinFamilyDto) {
     const user = req.user as UserEntity;
     return this.familyService.join(user.id, dto.inviteCode.toUpperCase());
@@ -54,7 +57,12 @@ export class FamilyController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.familyService.findById(id);
+  async findOne(@Param('id') id: string, @Req() req: Request) {
+    const user = req.user as UserEntity;
+    const family = await this.familyService.findById(id);
+    if (!family.members.some((m) => m.id === user.id)) {
+      throw new ForbiddenException('Access denied');
+    }
+    return family;
   }
 }

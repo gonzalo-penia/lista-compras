@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ShoppingListEntity } from './shopping-list.entity';
@@ -60,7 +60,7 @@ export class ListService {
   async addExpense(listId: string, userId: string, amount: number, description?: string): Promise<ExpenseEntity> {
     const list = await this.listRepo.findOneBy({ id: listId });
     if (!list) throw new NotFoundException('List not found');
-    if (list.settled) throw new Error('List is settled, no more expenses can be added');
+    if (list.settled) throw new ForbiddenException('List is settled, no more expenses can be added');
     const expense = this.expenseRepo.create({ listId, userId, amount, description: description ?? null });
     const saved = await this.expenseRepo.save(expense);
     return this.expenseRepo.findOne({ where: { id: saved.id }, relations: ['user'] }) as Promise<ExpenseEntity>;
@@ -81,7 +81,7 @@ export class ListService {
   async addItem(listId: string, data: AddItemData, userId: string): Promise<ShoppingItemEntity> {
     const list = await this.listRepo.findOneBy({ id: listId });
     if (!list) throw new NotFoundException('List not found');
-    if (list.settled) throw new Error('List is settled, no more items can be added');
+    if (list.settled) throw new ForbiddenException('List is settled, no more items can be added');
 
     const item = this.itemRepo.create({
       listId,

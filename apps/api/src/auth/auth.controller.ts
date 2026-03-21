@@ -1,10 +1,17 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { UserEntity } from '../users/user.entity';
+
+const COOKIE_NAME = 'access_token';
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  sameSite: 'lax' as const,
+  path: '/',
+};
 
 @Controller('auth')
 export class AuthController {
@@ -22,23 +29,29 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   googleCallback(@Req() req: Request, @Res() res: Response) {
-    const { accessToken, user } = this.authService.login(req.user as UserEntity);
+    const { accessToken } = this.authService.login(req.user as UserEntity);
     const webUrl = this.config.get('WEB_URL', 'http://localhost:3000');
+    const isProduction = this.config.get('NODE_ENV') === 'production';
 
-    // Redirige al frontend con el token como query param
-    // El frontend lo captura, lo guarda en Zustand y limpia la URL
-    const redirectUrl = new URL('/auth/callback', webUrl);
-    redirectUrl.searchParams.set('token', accessToken);
-    redirectUrl.searchParams.set('name', user.name);
-    redirectUrl.searchParams.set('email', user.email);
-    if (user.picture) redirectUrl.searchParams.set('picture', user.picture);
+    res.cookie(COOKIE_NAME, accessToken, {
+      ...COOKIE_OPTIONS,
+      secure: isProduction,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 días
+    });
 
-    res.redirect(redirectUrl.toString());
+    res.redirect(`${webUrl}/auth/callback`);
   }
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
   me(@Req() req: Request) {
     return req.user;
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  logout(@Res({ passthrough: true }) res: Response) {
+    res.clearCookie(COOKIE_NAME, COOKIE_OPTIONS);
+    return { ok: true };
   }
 }

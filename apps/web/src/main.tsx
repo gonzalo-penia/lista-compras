@@ -9,7 +9,11 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60,
-      retry: 1,
+      retry: (failureCount, error) => {
+        // No reintentar en 401 — la sesión expiró, hay que redirigir al login
+        if (error instanceof Error && error.message === 'Unauthorized') return false;
+        return failureCount < 1;
+      },
     },
   },
 });

@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { FamilyModule } from './families/family.module';
@@ -14,6 +16,18 @@ import { ExpenseEntity } from './lists/expense.entity';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000,  // ventana de 1 minuto
+        limit: 60,    // 60 requests por minuto por IP
+      },
+      {
+        name: 'strict',
+        ttl: 60_000,  // ventana de 1 minuto
+        limit: 5,     // 5 intentos por minuto (para join de familia)
+      },
+    ]),
     TypeOrmModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -31,6 +45,12 @@ import { ExpenseEntity } from './lists/expense.entity';
     AuthModule,
     FamilyModule,
     ListModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}

@@ -6,12 +6,22 @@ import { useFamilyLists, useCreateList, useDeleteList } from '../hooks/useLists'
 import { useAuthStore } from '../store/auth.store';
 import { UserAvatar } from '../components/UserAvatar';
 import { ThemeToggle } from '../components/ThemeToggle';
-import { getSocket } from '../lib/socket';
+import { getSocket, disconnectSocket } from '../lib/socket';
+import { api } from '../lib/api';
 import type { ShoppingList } from '@familycart/types';
 
 export function FamilyHomePage() {
   const navigate = useNavigate();
   const { clearAuth } = useAuthStore();
+
+  async function handleLogout() {
+    try {
+      await api.post('/auth/logout', {});
+    } finally {
+      disconnectSocket();
+      clearAuth();
+    }
+  }
   const qc = useQueryClient();
   const [newListName, setNewListName] = useState('');
   const [newListTrackExpenses, setNewListTrackExpenses] = useState(false);
@@ -94,7 +104,7 @@ export function FamilyHomePage() {
           <ThemeToggle />
           <UserAvatar />
           <button
-            onClick={clearAuth}
+            onClick={handleLogout}
             aria-label="Cerrar sesión"
             className="w-8 h-8 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
           >

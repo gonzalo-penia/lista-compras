@@ -7,11 +7,13 @@ import { ListService } from './list.service';
 import { ListGateway } from './list.gateway';
 import { ListController } from './list.controller';
 import { AuthModule } from '../auth/auth.module';
+import { FamilyModule } from '../families/family.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ShoppingListEntity, ShoppingItemEntity, ExpenseEntity]),
     AuthModule, // provee JwtModule exportado
+    FamilyModule,
   ],
   controllers: [ListController],
   providers: [ListService, ListGateway],

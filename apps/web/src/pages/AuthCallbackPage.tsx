@@ -1,30 +1,23 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/auth.store';
+import { api } from '../lib/api';
+import type { User } from '@familycart/types';
 
 export function AuthCallbackPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((s) => s.setAuth);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const token = params.get('token');
-    const name = params.get('name');
-    const email = params.get('email');
-    const picture = params.get('picture') ?? undefined;
-
-    if (!token || !name || !email) {
-      navigate('/login', { replace: true });
-      return;
-    }
-
-    setAuth(
-      { id: '', name, email, picture, createdAt: new Date() },
-      token,
-    );
-
-    // Limpia los params de la URL antes de navegar
-    navigate('/', { replace: true });
+    api
+      .get<User>('/auth/me')
+      .then((user) => {
+        setAuth(user);
+        navigate('/', { replace: true });
+      })
+      .catch(() => {
+        navigate('/login', { replace: true });
+      });
   }, [navigate, setAuth]);
 
   return (

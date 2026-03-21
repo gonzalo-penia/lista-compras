@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useListDetail } from '../hooks/useListDetail';
 import { useToggleExpenses, useSettleList } from '../hooks/useLists';
 import { useFamilies } from '../hooks/useFamilies';
@@ -7,11 +8,12 @@ import { getSocket } from '../lib/socket';
 import { UserAvatar } from '../components/UserAvatar';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { useAuthStore } from '../store/auth.store';
-import type { Expense } from '@familycart/types';
+import type { Expense, ShoppingList } from '@familycart/types';
 
 export function ListDetailPage() {
   const { listId } = useParams<{ listId: string }>();
   const navigate = useNavigate();
+  const qc = useQueryClient();
   const { user } = useAuthStore();
   const [newItemName, setNewItemName] = useState('');
   const [expenseAmount, setExpenseAmount] = useState('');
@@ -35,6 +37,18 @@ export function ListDetailPage() {
 
   function handleToggle(itemId: string, checked: boolean) {
     if (!listId) return;
+
+    // Optimistic update: refleja el cambio inmediatamente sin esperar al servidor
+    qc.setQueryData<ShoppingList>(['list', listId], (prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        items: prev.items.map((i) =>
+          i.id === itemId ? { ...i, checked, checkedBy: checked ? (user?.id ?? undefined) : undefined } : i,
+        ),
+      };
+    });
+
     getSocket().emit('item:toggle', { listId, itemId, checked });
   }
 

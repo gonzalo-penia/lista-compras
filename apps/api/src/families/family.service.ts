@@ -22,7 +22,7 @@ export class FamilyService {
     let code: string;
     let exists: FamilyEntity | null;
     do {
-      code = randomBytes(3).toString('hex').toUpperCase(); // e.g. "A3F9B2"
+      code = randomBytes(4).toString('hex').toUpperCase(); // e.g. "A3F9B2C1"
       exists = await this.familyRepo.findOneBy({ inviteCode: code });
     } while (exists);
     return code;
@@ -78,5 +78,14 @@ export class FamilyService {
     });
     if (!family) throw new NotFoundException('Family not found');
     return family;
+  }
+
+  async isMember(userId: string, familyId: string): Promise<boolean> {
+    const count = await this.familyRepo
+      .createQueryBuilder('family')
+      .innerJoin('family.members', 'member', 'member.id = :userId', { userId })
+      .where('family.id = :familyId', { familyId })
+      .getCount();
+    return count > 0;
   }
 }

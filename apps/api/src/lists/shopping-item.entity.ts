@@ -6,9 +6,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { ShoppingListEntity } from './shopping-list.entity';
 
+@Index('idx_shopping_items_list_checked', ['listId', 'checked'])
 @Entity('shopping_items')
 export class ShoppingItemEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -29,6 +31,7 @@ export class ShoppingItemEntity {
   @Column({ name: 'checked_by', type: 'varchar', nullable: true })
   checkedBy!: string | null;
 
+  @Index('idx_shopping_items_created_by')
   @Column({ name: 'created_by' })
   createdBy!: string;
 
@@ -36,6 +39,7 @@ export class ShoppingItemEntity {
   @JoinColumn({ name: 'list_id' })
   list!: ShoppingListEntity;
 
+  @Index('idx_shopping_items_list_id')
   @Column({ name: 'list_id' })
   listId!: string;
 

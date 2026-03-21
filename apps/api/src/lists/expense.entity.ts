@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { UserEntity } from '../users/user.entity';
 import { ShoppingListEntity } from './shopping-list.entity';
@@ -29,6 +30,7 @@ export class ExpenseEntity {
   @JoinColumn({ name: 'user_id' })
   user!: UserEntity;
 
+  @Index('idx_expenses_user_id')
   @Column({ name: 'user_id' })
   userId!: string;
 
@@ -36,6 +38,7 @@ export class ExpenseEntity {
   @JoinColumn({ name: 'list_id' })
   list!: ShoppingListEntity;
 
+  @Index('idx_expenses_list_id')
   @Column({ name: 'list_id' })
   listId!: string;
 
