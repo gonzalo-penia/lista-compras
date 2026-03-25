@@ -118,7 +118,15 @@ const WS_THROTTLE_WINDOW_MS = 1_000;
 @UsePipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true }))
 @WebSocketGateway({
   cors: {
-    origin: process.env.WEB_URL ?? 'http://localhost:3000',
+    // Los clientes de navegador (web) envían Origin → se valida contra WEB_URL.
+    // Los clientes nativos (React Native) no envían Origin → se permite sin restricción
+    // porque la autenticación real se hace vía JWT en el handshake.
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      if (!origin) return callback(null, true); // cliente nativo
+      const allowed = process.env.WEB_URL ?? 'http://localhost:3000';
+      if (origin === allowed) return callback(null, true);
+      callback(new Error(`Origin no permitido: ${origin}`));
+    },
     credentials: true,
   },
 })
@@ -136,11 +144,22 @@ export class ListGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleConnection(client: AuthSocket) {
     try {
-      const cookieHeader = client.handshake.headers.cookie ?? '';
-      const token = cookieHeader
-        .split(';')
-        .map((c) => c.trim().split('='))
-        .find(([k]) => k === 'access_token')?.[1];
+      let token: string | undefined;
+
+      // 1. Mobile: token en handshake.auth.token
+      const authToken = client.handshake.auth?.token;
+      if (authToken && typeof authToken === 'string') {
+        token = authToken;
+      }
+
+      // 2. Web: token en cookie
+      if (!token) {
+        const cookieHeader = client.handshake.headers.cookie ?? '';
+        token = cookieHeader
+          .split(';')
+          .map((c) => c.trim().split('='))
+          .find(([k]) => k === 'access_token')?.[1];
+      }
 
       if (!token) throw new Error('No token');
       const payload = this.jwtService.verify<{ sub: string }>(decodeURIComponent(token));

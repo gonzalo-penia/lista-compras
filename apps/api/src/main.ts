@@ -12,8 +12,14 @@ async function bootstrap() {
   app.use(cookieParser());
   app.setGlobalPrefix('api');
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
+
+  const allowedOrigins = [
+    process.env.WEB_URL ?? 'http://localhost:3000',
+    process.env.MOBILE_SCHEME ?? 'familycart://',
+  ];
+
   app.enableCors({
-    origin: process.env.WEB_URL ?? 'http://localhost:3000',
+    origin: allowedOrigins,
     credentials: true,
   });
 

@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { UsersModule } from '../users/users.module';
 
 @Module({
@@ -21,7 +22,7 @@ import { UsersModule } from '../users/users.module';
       }),
     }),
   ],
-  providers: [AuthService, GoogleStrategy, JwtStrategy],
+  providers: [AuthService, GoogleStrategy, JwtStrategy, GoogleAuthGuard],
   controllers: [AuthController],
   exports: [JwtModule],
 })
