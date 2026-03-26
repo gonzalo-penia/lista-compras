@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npm install:*)",
-      "Bash(npx turbo:*)"
+      "Bash(npx turbo:*)",
+      "Bash(find /c/Proyectos/lista-compras -maxdepth 2 -name .env* -o -name *.env*)",
+      "Bash(grep -r redis /c/Proyectos/lista-compras --include=*.ts --include=*.tsx --include=*.json --include=*.md)",
+      "Bash(grep -r helmet /c/Proyectos/lista-compras --include=*.ts --include=*.tsx --include=*.json)",
+      "Bash(grep -r NODE_ENV /c/Proyectos/lista-compras/apps --include=*.ts --include=*.tsx --include=*.js)"
     ]
   }
 }
