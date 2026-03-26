@@ -8,7 +8,11 @@
     "start": "node dist/main",
     "typecheck": "tsc --noEmit",
     "lint": "eslint \"{src,test}/**/*.ts\" --fix",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "migration:generate": "typeorm-ts-node-commonjs migration:generate -d src/data-source.ts",
+    "migration:run": "typeorm-ts-node-commonjs migration:run -d src/data-source.ts",
+    "migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/data-source.ts",
+    "migration:show": "typeorm-ts-node-commonjs migration:show -d src/data-source.ts"
   },
   "dependencies": {
     "@familycart/core": "*",
@@ -29,6 +33,8 @@
     "class-validator": "^0.15.1",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
+    "helmet": "^8.1.0",
+    "ioredis": "^5.10.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-jwt": "^4.0.1",
@@ -45,6 +51,7 @@
     "@types/node": "^22.13.4",
     "@types/passport-google-oauth20": "^2.0.16",
     "@types/passport-jwt": "^4.0.1",
+    "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   }
 }

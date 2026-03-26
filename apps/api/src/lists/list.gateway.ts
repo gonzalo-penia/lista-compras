@@ -8,12 +8,14 @@ import {
   OnGatewayDisconnect,
   WsException,
 } from '@nestjs/websockets';
-import { UsePipes, ValidationPipe, ParseUUIDPipe } from '@nestjs/common';
+import { UsePipes, ValidationPipe, ParseUUIDPipe, Inject } from '@nestjs/common';
 import { IsString, IsUUID, IsBoolean, IsNumber, IsOptional, MinLength, MaxLength, Min, IsPositive } from 'class-validator';
 import { Server, Socket } from 'socket.io';
+import type { Redis } from 'ioredis';
 import { JwtService } from '@nestjs/jwt';
 import { ListService } from './list.service';
 import { FamilyService } from '../families/family.service';
+import { REDIS_CLIENT } from '../redis/redis.module';
 
 // ── DTOs ─────────────────────────────────────────────────────────────────────
 
@@ -134,12 +136,12 @@ export class ListGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
-  private readonly eventLog = new Map<string, number[]>();
-
   constructor(
     private readonly listService: ListService,
     private readonly familyService: FamilyService,
     private readonly jwtService: JwtService,
+    @Inject(REDIS_CLIENT)
+    private readonly redis: Redis,
   ) {}
 
   handleConnection(client: AuthSocket) {
@@ -169,20 +171,21 @@ export class ListGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
-  handleDisconnect(client: AuthSocket) {
-    this.eventLog.delete(client.userId);
+  handleDisconnect(_client: AuthSocket) {
+    // Las claves de throttle en Redis expiran automáticamente
   }
 
-  private enforceThrottle(userId: string): void {
-    const now = Date.now();
-    const timestamps = (this.eventLog.get(userId) ?? []).filter(
-      (t) => now - t < WS_THROTTLE_WINDOW_MS,
-    );
-    if (timestamps.length >= WS_THROTTLE_MAX) {
+  private async enforceThrottle(userId: string): Promise<void> {
+    const windowId = Math.floor(Date.now() / WS_THROTTLE_WINDOW_MS);
+    const key = `ws:throttle:${userId}:${windowId}`;
+    const count = await this.redis.incr(key);
+    if (count === 1) {
+      // Primera petición en esta ventana — establece expiración automática
+      await this.redis.pexpire(key, WS_THROTTLE_WINDOW_MS * 2);
+    }
+    if (count > WS_THROTTLE_MAX) {
       throw new WsException('Too many requests');
     }
-    timestamps.push(now);
-    this.eventLog.set(userId, timestamps);
   }
 
   private async assertFamilyAccess(userId: string, familyId: string): Promise<void> {
@@ -192,7 +195,7 @@ export class ListGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   private async assertListAccess(userId: string, listId: string): Promise<string> {
-    this.enforceThrottle(userId);
+    await this.enforceThrottle(userId);
     const list = await this.listService.findById(listId);
     await this.assertFamilyAccess(userId, list.familyId);
     return list.familyId;

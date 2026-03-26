@@ -2,7 +2,25 @@ import { useAuthStore } from '../store/auth.store';
 
 const BASE = '/api';
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+// Evita múltiples llamadas de refresh simultáneas
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefresh(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = fetch(`${BASE}/auth/refresh`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+  })
+    .then((res) => res.ok)
+    .catch(() => false)
+    .finally(() => { refreshPromise = null; });
+
+  return refreshPromise;
+}
+
+async function request<T>(path: string, init?: RequestInit, isRetry = false): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     credentials: 'include',
@@ -12,7 +30,9 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !isRetry) {
+    const refreshed = await tryRefresh();
+    if (refreshed) return request<T>(path, init, true);
     useAuthStore.getState().clearAuth();
     throw new Error('Unauthorized');
   }

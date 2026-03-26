@@ -46,12 +46,13 @@ export function LoginScreen() {
         return;
       }
 
-      // Intercambiar el auth code por el JWT real
-      const { accessToken, user } = await api.post<{ accessToken: string; user: User }>(
-        '/auth/exchange',
-        { code }
-      );
-      await setAuth(user, accessToken);
+      // Intercambiar el auth code por el JWT real + refresh token
+      const { accessToken, refreshToken, user } = await api.post<{
+        accessToken: string;
+        refreshToken: string;
+        user: User;
+      }>('/auth/exchange', { code });
+      await setAuth(user, accessToken, refreshToken);
     } catch (err) {
       Alert.alert('Error', 'No se pudo iniciar sesión. Intentá de nuevo.');
     } finally {

@@ -4,6 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
+import { RedisModule } from './redis/redis.module';
 import { UsersModule } from './users/users.module';
 import { FamilyModule } from './families/family.module';
 import { ListModule } from './lists/list.module';
@@ -12,10 +13,12 @@ import { FamilyEntity } from './families/family.entity';
 import { ShoppingListEntity } from './lists/shopping-list.entity';
 import { ShoppingItemEntity } from './lists/shopping-item.entity';
 import { ExpenseEntity } from './lists/expense.entity';
+import { RefreshTokenEntity } from './auth/refresh-token.entity';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    RedisModule,
     ThrottlerModule.forRoot([
       {
         name: 'default',
@@ -37,7 +40,7 @@ import { ExpenseEntity } from './lists/expense.entity';
         username: config.get('DB_USER', 'postgres'),
         password: config.get('DB_PASS', 'postgres'),
         database: config.get('DB_NAME', 'familycart'),
-        entities: [UserEntity, FamilyEntity, ShoppingListEntity, ShoppingItemEntity, ExpenseEntity],
+        entities: [UserEntity, FamilyEntity, ShoppingListEntity, ShoppingItemEntity, ExpenseEntity, RefreshTokenEntity],
         synchronize: config.get('NODE_ENV') !== 'production',
       }),
     }),

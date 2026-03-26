@@ -2,8 +2,37 @@ import * as SecureStore from 'expo-secure-store';
 import { API_URL } from './config';
 
 export const TOKEN_KEY = 'familycart_token';
+export const REFRESH_KEY = 'familycart_refresh';
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+// Evita múltiples llamadas de refresh simultáneas
+let refreshPromise: Promise<boolean> | null = null;
+
+async function tryRefresh(): Promise<boolean> {
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = (async () => {
+    const refreshToken = await SecureStore.getItemAsync(REFRESH_KEY);
+    if (!refreshToken) return false;
+
+    const res = await fetch(`${API_URL}/api/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) return false;
+
+    const data = await res.json();
+    await SecureStore.setItemAsync(TOKEN_KEY, data.accessToken);
+    return true;
+  })()
+    .catch(() => false)
+    .finally(() => { refreshPromise = null; });
+
+  return refreshPromise;
+}
+
+async function request<T>(path: string, init?: RequestInit, isRetry = false): Promise<T> {
   const token = await SecureStore.getItemAsync(TOKEN_KEY);
 
   const res = await fetch(`${API_URL}/api${path}`, {
@@ -15,8 +44,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     },
   });
 
-  if (res.status === 401) {
+  if (res.status === 401 && !isRetry) {
+    const refreshed = await tryRefresh();
+    if (refreshed) return request<T>(path, init, true);
+
     await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(REFRESH_KEY);
     throw new Error('Unauthorized');
   }
 

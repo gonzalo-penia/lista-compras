@@ -17,7 +17,6 @@ import { useFamilies } from '../hooks/useFamilies';
 import { useFamilyLists, useCreateList, useDeleteList } from '../hooks/useLists';
 import { useAuthStore } from '../store/auth.store';
 import { getSocket, disconnectSocket } from '../lib/socket';
-import { api } from '../lib/api';
 import { UserAvatar } from '../components/UserAvatar';
 import { Spinner } from '../components/Spinner';
 import type { RootStackParamList } from '../navigation';
@@ -79,12 +78,8 @@ export function HomeScreen() {
   }, [family?.id, qc]);
 
   async function handleLogout() {
-    try {
-      await api.post('/auth/logout', {});
-    } finally {
-      disconnectSocket();
-      await clearAuth();
-    }
+    disconnectSocket();
+    await clearAuth();
   }
 
   async function handleCreateList() {
